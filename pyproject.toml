@@ -1,0 +1,26 @@
+[project]
+name = "sotarag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "arxiv>=2.4.1",
+    "fastapi>=0.135.1",
+    "langchain>=1.2.10",
+    "langchain-community>=0.4.1",
+    "langchain-text-splitters>=1.1.1",
+    "pymupdf>=1.27.1",
+    "qdrant-client>=1.17.0",
+    "requests>=2.32.5",
+    "streamlit>=1.55.0",
+    "taskiq>=0.12.1",
+    "taskiq-redis>=1.2.2",
+    "uvicorn>=0.41.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.15.5",
+]

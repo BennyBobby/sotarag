@@ -1,0 +1,55 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve & 
+        sleep 5
+        ollama pull mxbai-embed-large
+        wait
+    ports:
+      - "11434:11434"
+
+  app:
+    build: .
+    container_name: sotarag-app
+    depends_on:
+      - qdrant
+      - redis
+      - ollama
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_HOST=http://ollama:11434
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+
+volumes:
+  ollama_data:

@@ -1,0 +1,12 @@
+
+qdrant_data/
+.venv
+__pycache__
+.git
+.ipynb_checkpoints
+qdrant_data
+*.pyc
+
+Dockerfile
+docker-compose.yaml
+.gitignore
