@@ -40,3 +40,23 @@ def upsert_to_qdrant(collection_name: str, chunks: list, vectors: list, metadata
 
     client.upsert(collection_name=collection_name, points=points)
     print(f"Successfully indexed {len(points)} chunks in Qdrant.")
+
+
+def search_in_qdrant(collection_name: str, query_vector: list, limit: int = 3):
+    """
+    Search for the most similar chunks in Qdrant.
+    """
+    hits = client.query_points(
+        collection_name=collection_name, query=query_vector, limit=limit
+    ).points
+
+    results = []
+    for hit in hits:
+        results.append(
+            {
+                "text": hit.payload.get("text"),
+                "source": hit.payload.get("source"),
+                "score": hit.score,
+            }
+        )
+    return results
