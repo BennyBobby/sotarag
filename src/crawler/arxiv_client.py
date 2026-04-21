@@ -22,9 +22,10 @@ def search_arxiv(query: str, max_results: int = 5):
             {
                 "id": result.entry_id,
                 "title": result.title,
+                "authors": [a.name for a in result.authors],
                 "summary": result.summary,
                 "pdf_url": result.pdf_url,
-                "published": result.published,
+                "published": result.published.isoformat() if result.published else None,
             }
         )
     return papers

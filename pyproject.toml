@@ -17,6 +17,8 @@ dependencies = [
     "taskiq>=0.12.1",
     "taskiq-redis>=1.2.2",
     "uvicorn>=0.41.0",
+    "python-dotenv>=1.0.0",
+    "redis>=5.0.0",
 ]
 
 [dependency-groups]

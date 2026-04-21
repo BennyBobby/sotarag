@@ -28,16 +28,17 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        ollama serve & 
+        ollama serve &
         sleep 5
         ollama pull mxbai-embed-large
         wait
     ports:
       - "11434:11434"
 
-  app:
+  api:
     build: .
-    container_name: sotarag-app
+    container_name: sotarag-api
+    command: uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000
     depends_on:
       - qdrant
       - redis
@@ -46,6 +47,34 @@ services:
       - REDIS_URL=redis://redis:6379
       - QDRANT_URL=http://qdrant:6333
       - OLLAMA_HOST=http://ollama:11434
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+
+  worker:
+    build: .
+    container_name: sotarag-worker
+    command: uv run taskiq worker src.tasks:broker --workers 2
+    depends_on:
+      - redis
+      - qdrant
+      - ollama
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - .:/app
+
+  app:
+    build: .
+    container_name: sotarag-app
+    command: uv run streamlit run src/ui/app.py --server.address=0.0.0.0 --server.port=8501
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8000
     ports:
       - "8501:8501"
     volumes:

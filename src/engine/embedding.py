@@ -1,13 +1,14 @@
 import requests
+from src.config import OLLAMA_HOST, EMBEDDING_MODEL
 
 
-def get_embeddings(text_chunks: list, model: str = "mxbai-embed-large"):
+def get_embeddings(text_chunks: list, model: str = EMBEDDING_MODEL):
     embeddings = []
 
     for chunk in text_chunks:
         try:
             response = requests.post(
-                "http://ollama:11434/api/embed",
+                f"{OLLAMA_HOST}/api/embed",
                 json={"model": model, "input": chunk},
                 timeout=30,
             )

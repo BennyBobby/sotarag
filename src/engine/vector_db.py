@@ -1,12 +1,13 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
 import uuid
+from src.config import QDRANT_URL, COLLECTION_NAME
 
 
-client = QdrantClient(host="qdrant", port=6333)
+client = QdrantClient(url=QDRANT_URL)
 
 
-def init_collection(collection_name: str = "sota_papers"):
+def init_collection(collection_name: str = COLLECTION_NAME):
     """Create a collection in Qdrant if it doesn't exist."""
     collections = client.get_collections().collections
     exists = any(c.name == collection_name for c in collections)
@@ -14,11 +15,23 @@ def init_collection(collection_name: str = "sota_papers"):
     if not exists:
         client.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(
-                size=1024, distance=Distance.COSINE
-            ),  # Size depends on the embedding model
+            vectors_config=VectorParams(size=1024, distance=Distance.COSINE),
         )
         print(f"Collection '{collection_name}' created.")
+
+
+def paper_exists(collection_name: str, pdf_url: str) -> bool:
+    """Check if a paper URL is already indexed to avoid duplicates."""
+    results, _ = client.scroll(
+        collection_name=collection_name,
+        scroll_filter=Filter(
+            must=[FieldCondition(key="url", match=MatchValue(value=pdf_url))]
+        ),
+        limit=1,
+        with_payload=False,
+        with_vectors=False,
+    )
+    return len(results) > 0
 
 
 def upsert_to_qdrant(collection_name: str, chunks: list, vectors: list, metadata: dict):
@@ -33,6 +46,9 @@ def upsert_to_qdrant(collection_name: str, chunks: list, vectors: list, metadata
                     "text": chunk,
                     "source": metadata.get("title", "Unknown"),
                     "url": metadata.get("pdf_url", ""),
+                    "authors": metadata.get("authors", []),
+                    "published": metadata.get("published", ""),
+                    "abstract": metadata.get("abstract", ""),
                     "chunk_index": i,
                 },
             )
@@ -43,9 +59,7 @@ def upsert_to_qdrant(collection_name: str, chunks: list, vectors: list, metadata
 
 
 def search_in_qdrant(collection_name: str, query_vector: list, limit: int = 3):
-    """
-    Search for the most similar chunks in Qdrant.
-    """
+    """Search for the most similar chunks in Qdrant."""
     hits = client.query_points(
         collection_name=collection_name, query=query_vector, limit=limit
     ).points
@@ -56,7 +70,29 @@ def search_in_qdrant(collection_name: str, query_vector: list, limit: int = 3):
             {
                 "text": hit.payload.get("text"),
                 "source": hit.payload.get("source"),
+                "url": hit.payload.get("url"),
+                "authors": hit.payload.get("authors", []),
+                "published": hit.payload.get("published", ""),
                 "score": hit.score,
             }
         )
     return results
+
+
+def get_indexed_papers(collection_name: str = COLLECTION_NAME):
+    """Retrieve unique paper titles and URLs from the collection metadata."""
+    points, _ = client.scroll(
+        collection_name=collection_name,
+        limit=100,
+        with_payload=True,
+        with_vectors=False,
+    )
+
+    indexed_papers = {}
+    for pt in points:
+        title = pt.payload.get("source")
+        url = pt.payload.get("url")
+        if title and title not in indexed_papers:
+            indexed_papers[title] = url
+
+    return indexed_papers
