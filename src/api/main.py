@@ -6,11 +6,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import redis as sync_redis
 
-from src.config import REDIS_URL, QDRANT_URL, OLLAMA_HOST
+from src.config import REDIS_URL, QDRANT_URL, OLLAMA_HOST, COLLECTION_NAME
 from src.tasks import broker, ingest_paper_task
 from src.crawler.arxiv_client import search_arxiv
 from src.engine.chat import ask_sotarag, stream_sotarag
-from src.engine.vector_db import get_indexed_papers
+from src.engine.vector_db import get_indexed_papers, delete_paper
 
 HISTORY_KEY = "sotarag:chat_history"
 redis_client = sync_redis.from_url(REDIS_URL, decode_responses=True)
@@ -96,6 +96,15 @@ async def search_and_ingest(req: SearchRequest):
         tasks.append({"title": art["title"], "task_id": task.task_id})
 
     return {"tasks": tasks, "count": len(tasks)}
+
+
+@app.delete("/papers")
+def remove_paper(pdf_url: str):
+    papers = get_indexed_papers()
+    if pdf_url not in papers.values():
+        raise HTTPException(status_code=404, detail="Paper not found.")
+    delete_paper(COLLECTION_NAME, pdf_url)
+    return {"status": "deleted", "pdf_url": pdf_url}
 
 
 @app.get("/tasks/{task_id}")

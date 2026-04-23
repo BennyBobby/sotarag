@@ -25,7 +25,18 @@ with st.sidebar:
             papers = requests.get(f"{API_URL}/papers", timeout=5).json()
             if papers:
                 for title, url in papers.items():
-                    st.markdown(f"[{title[:40]}...]({url})")
+                    col1, col2 = st.columns([4, 1])
+                    col1.markdown(f"[{title[:40]}...]({url})")
+                    if col2.button("✕", key=f"del_{url}"):
+                        try:
+                            resp = requests.delete(f"{API_URL}/papers", params={"pdf_url": url}, timeout=5)
+                            if resp.ok:
+                                st.success(f"Deleted: {title[:40]}")
+                                st.rerun()
+                            else:
+                                st.error("Could not delete paper.")
+                        except Exception as e:
+                            st.error(f"API error: {e}")
             else:
                 st.info("No papers indexed yet.")
         except Exception:

@@ -80,6 +80,18 @@ def search_in_qdrant(collection_name: str, query_vector: list, limit: int = 3):
     return results
 
 
+def delete_paper(collection_name: str, pdf_url: str) -> int:
+    """Delete all chunks belonging to a paper identified by its URL. Returns deleted count."""
+    client.delete(
+        collection_name=collection_name,
+        points_selector=Filter(
+            must=[FieldCondition(key="url", match=MatchValue(value=pdf_url))]
+        ),
+    )
+    logger.info("Deleted paper with url: %s", pdf_url)
+    return 1
+
+
 def get_indexed_papers(collection_name: str = COLLECTION_NAME):
     """Retrieve unique paper titles and URLs from the collection metadata."""
     points, _ = client.scroll(

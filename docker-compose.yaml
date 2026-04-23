@@ -31,6 +31,7 @@ services:
         ollama serve &
         sleep 5
         ollama pull mxbai-embed-large
+        ollama pull llama3.1
         wait
     ports:
       - "11434:11434"
