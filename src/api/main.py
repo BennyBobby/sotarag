@@ -1,11 +1,12 @@
 import json
+import requests
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import redis as sync_redis
 
-from src.config import REDIS_URL
+from src.config import REDIS_URL, QDRANT_URL, OLLAMA_HOST
 from src.tasks import broker, ingest_paper_task
 from src.crawler.arxiv_client import search_arxiv
 from src.engine.chat import ask_sotarag, stream_sotarag
@@ -48,7 +49,28 @@ def _save_to_history(question: str, answer: str):
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    services = {}
+
+    try:
+        r = requests.get(f"{QDRANT_URL}/healthz", timeout=3)
+        services["qdrant"] = "ok" if r.ok else "error"
+    except Exception:
+        services["qdrant"] = "unreachable"
+
+    try:
+        r = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=3)
+        services["ollama"] = "ok" if r.ok else "error"
+    except Exception:
+        services["ollama"] = "unreachable"
+
+    try:
+        redis_client.ping()
+        services["redis"] = "ok"
+    except Exception:
+        services["redis"] = "unreachable"
+
+    overall = "ok" if all(v == "ok" for v in services.values()) else "degraded"
+    return {"status": overall, "services": services}
 
 
 @app.get("/papers")

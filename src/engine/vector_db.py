@@ -2,8 +2,9 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
 import uuid
 from src.config import QDRANT_URL, COLLECTION_NAME
+from src.logger import get_logger
 
-
+logger = get_logger(__name__)
 client = QdrantClient(url=QDRANT_URL)
 
 
@@ -17,7 +18,7 @@ def init_collection(collection_name: str = COLLECTION_NAME):
             collection_name=collection_name,
             vectors_config=VectorParams(size=1024, distance=Distance.COSINE),
         )
-        print(f"Collection '{collection_name}' created.")
+        logger.info("Collection '%s' created.", collection_name)
 
 
 def paper_exists(collection_name: str, pdf_url: str) -> bool:
@@ -55,7 +56,7 @@ def upsert_to_qdrant(collection_name: str, chunks: list, vectors: list, metadata
         )
 
     client.upsert(collection_name=collection_name, points=points)
-    print(f"Successfully indexed {len(points)} chunks in Qdrant.")
+    logger.info("Successfully indexed %d chunks in Qdrant.", len(points))
 
 
 def search_in_qdrant(collection_name: str, query_vector: list, limit: int = 3):

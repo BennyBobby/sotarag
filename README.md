@@ -85,7 +85,7 @@ uv run streamlit run src/ui/app.py
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/health` | Health check |
+| `GET` | `/health` | Health check (Qdrant, Ollama, Redis) |
 | `GET` | `/papers` | List indexed papers |
 | `POST` | `/papers/search-and-ingest` | Search ArXiv and queue ingestion |
 | `GET` | `/tasks/{task_id}` | Check ingestion task status |
@@ -145,5 +145,12 @@ src/
 ├── ui/
 │   └── app.py           # Streamlit interface
 ├── config.py            # Centralized configuration
+├── logger.py            # Shared logging configuration
 └── tasks.py             # Taskiq async tasks
+tests/
+├── test_api.py          # API endpoint tests
+├── test_chat.py         # RAG logic tests
+├── test_embedding.py    # Embedding tests
+├── test_ingest.py       # Ingestion pipeline tests
+└── test_processor.py    # PDF processing tests
 ```

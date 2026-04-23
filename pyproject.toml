@@ -1,7 +1,7 @@
 [project]
 name = "sotarag"
 version = "0.1.0"
-description = "Add your description here"
+description = "RAG system for scientific papers that search, ingest and query ArXiv articles via Ollama and Qdrant"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

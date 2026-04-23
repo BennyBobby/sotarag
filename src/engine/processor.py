@@ -2,6 +2,9 @@ import fitz
 import requests
 import io
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def download_and_split_pdf(url: str, chunk_size: int = 1000, chunk_overlap: int = 100):
@@ -27,7 +30,7 @@ def download_and_split_pdf(url: str, chunk_size: int = 1000, chunk_overlap: int 
         doc.close()
 
         if not full_text.strip():
-            print(f"Warning: No text extracted from {url}. PDF might be image-based.")
+            logger.warning("No text extracted from %s. PDF might be image-based.", url)
             return []
         # RecursiveCharacterTextSplitter tries to split on paragraphs, then sentences
         text_splitter = RecursiveCharacterTextSplitter(
@@ -41,7 +44,7 @@ def download_and_split_pdf(url: str, chunk_size: int = 1000, chunk_overlap: int 
         return chunks
 
     except Exception as e:
-        print(f"Error processing PDF at {url}: {e}")
+        logger.error("Error processing PDF at %s: %s", url, e)
         return []
 
 

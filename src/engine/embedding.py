@@ -1,5 +1,8 @@
 import requests
 from src.config import OLLAMA_HOST, EMBEDDING_MODEL
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_embeddings(text_chunks: list, model: str = EMBEDDING_MODEL):
@@ -18,7 +21,7 @@ def get_embeddings(text_chunks: list, model: str = EMBEDDING_MODEL):
                 embeddings.append(data["embeddings"][0])
 
         except Exception as e:
-            print(f"Error generating embedding for chunk: {e}")
+            logger.error("Error generating embedding for chunk: %s", e)
             continue
 
     return embeddings

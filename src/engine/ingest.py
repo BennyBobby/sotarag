@@ -2,14 +2,17 @@ from src.config import COLLECTION_NAME
 from src.engine.processor import download_and_split_pdf
 from src.engine.embedding import get_embeddings
 from src.engine.vector_db import init_collection, upsert_to_qdrant, paper_exists
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def ingest_paper(url: str, title: str, authors: list = None, published: str = None, abstract: str = None):
-    print(f"--- Ingesting: {title} ---")
+    logger.info("Ingesting: %s", title)
     init_collection(COLLECTION_NAME)
 
     if paper_exists(COLLECTION_NAME, url):
-        print(f"--- Already indexed, skipping: {title} ---")
+        logger.info("Already indexed, skipping: %s", title)
         return
 
     chunks = download_and_split_pdf(url)
@@ -24,7 +27,7 @@ def ingest_paper(url: str, title: str, authors: list = None, published: str = No
         "abstract": abstract or "",
     }
     upsert_to_qdrant(COLLECTION_NAME, chunks, vectors, metadata)
-    print(f"--- Successfully ingested {title} ---")
+    logger.info("Successfully ingested: %s", title)
 
 
 if __name__ == "__main__":
